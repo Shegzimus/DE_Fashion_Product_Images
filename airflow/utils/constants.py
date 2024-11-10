@@ -12,3 +12,5 @@ kaggle_dataset_download_ref = f"{kaggle_dataset_user}/{kaggle_dataset_name}"
 
 path_to_local_home = os.environ.get("AIRFLOW_HOME", "opt/airflow")
 
+original_image_folder = 'opt/airflow/data/input/fashion-dataset/fashion-dataset/images'
+greyscale_output_folder = 'opt/airflow/data/output/greyscale'

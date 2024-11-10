@@ -4,5 +4,7 @@ airflow/.kaggle
 terraform/.terraform
 terraform/fashionimages-441305-8e0ac87a473e.json
 airflow/data/input
-airflow/data/output/
+airflow/data/output/greyscale
+airflow/data/output/metadata
 airflow/opt
+airflow/pipelines/lab.py
