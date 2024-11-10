@@ -3,4 +3,6 @@ airflow/.google
 airflow/.kaggle
 terraform/.terraform
 terraform/fashionimages-441305-8e0ac87a473e.json
-image_metadata.csv
+airflow/data/input
+airflow/data/output/
+airflow/opt
