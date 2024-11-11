@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.constants import (
     kaggle_dataset_download_ref, kaggle_dataset_name, kaggle_dataset_user, 
-    path_to_local_home)
+    path_to_local_home, original_image_folder)
 
 
 
@@ -88,47 +88,52 @@ def convert_to_greyscale(image_folder: str , output_folder: str) -> Image:
 
 
 # Function to extract metadata from a single image
-def extract_and_save_metadata(image_path: list) -> dict:
+def extract_and_save_metadata_to_csv(image_directory: list) -> None:
     """
-    Extract metadata from an image file using the ExifTags module.
-
-    This function opens an image file specified by `image_path`, extracts its
-    EXIF data, maps the EXIF tags to readable names, and returns a dictionary
-    containing the metadata.
+    Extracts metadata from images in a given directory and saves it to a CSV file.
 
     Parameters:
-    image_path (str): The path to the image file.
+    image_directory (list): A list containing the path(s) to the directory(ies) containing images.
 
     Returns:
-    dict: A dictionary containing the extracted metadata. The dictionary includes
-    the following keys: 'filename', which represents the name of the image file,
-    and other keys representing the EXIF tags and their corresponding values.
+    None
+
+    The function iterates through each image in the specified directory(ies), extracts metadata using the EXIF data,
+    maps the EXIF tags to readable names, and appends the metadata to a list. The list is then converted to a pandas DataFrame,
+    and the DataFrame is saved to a CSV file located at 'opt/airflow/data/output/metadata/image_metadata.csv'.
+    If the output directory does not exist, it is created.
     """
-    image = Image.open(image_path)
-    exif_data = image._getexif()  # Extract EXIF data
+    metadata_list = []
 
-    # Map EXIF data to readable tags
-    metadata = {}
-    if exif_data:
-        for tag, value in exif_data.items():
-            tag_name = ExifTags.TAGS.get(tag, tag)
-            metadata[tag_name] = value
-    metadata['filename'] = os.path.basename(image_path)  # Add filename for reference
-    return metadata
+    # Loop through each image in the directory
+    for filename in os.listdir(image_directory):
+        if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+            image_path = os.path.join(image_directory, filename)
 
+            try:
+                # Open image and extract EXIF data
+                image = Image.open(image_path)
+                exif_data = image._getexif()
 
-# Directory containing images
-image_directory = 'airflow/data/input/fashion-dataset/fashion-dataset/images'
-image_files = [os.path.join(image_directory, f) for f in os.listdir(image_directory) if f.lower().endswith('.jpg', '.jpeg', '.png')]
+                # Map EXIF data to readable tags
+                metadata = {'filename': filename}
+                if exif_data:
+                    for tag, value in exif_data.items():
+                        tag_name = ExifTags.TAGS.get(tag, tag)
+                        metadata[tag_name] = value
 
-# Extract metadata for each image and store in a list
-metadata_list = [extract_and_save_metadata(image_file) for image_file in image_files]
+                # Append metadata dictionary to list
+                metadata_list.append(metadata)
 
-# Convert the list of metadata dictionaries into a DataFrame
-df_metadata = pd.DataFrame(metadata_list)
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
 
-# Save the DataFrame to a CSV file
-output_csv_path = 'airflow/data/output/metadata/image_metadata.csv'
-df_metadata.to_csv(output_csv_path, index=False)
+    # Convert list of metadata dictionaries to a DataFrame
+    df_metadata = pd.DataFrame(metadata_list)
 
-print(f"Metadata saved to {output_csv_path}")
+    # Save DataFrame to CSV
+    output_csv_path = 'opt/airflow/data/output/metadata/image_metadata.csv'
+    os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
+    df_metadata.to_csv(output_csv_path, index=False)
+    print(f"Metadata saved to {output_csv_path}")
+
