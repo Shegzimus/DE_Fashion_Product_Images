@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 
-def upload_file_to_gcs(bucket, local_folder, target_folder_prefix=""):
+def upload_folder_to_gcs(bucket, local_folder, target_folder_prefix=""):
     """
     This function uploads a local file to a specified Google Cloud Storage (GCS) bucket.
 

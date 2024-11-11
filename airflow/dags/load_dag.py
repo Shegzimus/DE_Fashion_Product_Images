@@ -45,7 +45,6 @@ folder_paths = [
 ]
 
 # Dynamically create a task for each folder
-
 upload_tasks = []
 for folder in folder_paths:
     task = PythonOperator(
@@ -60,12 +59,11 @@ for folder in folder_paths:
     )
     upload_tasks.append(task)
 
-# Set dependencies (example: no particular order)
+
+
 begin = DummyOperator(task_id="begin", dag=dag)
 end = DummyOperator(task_id="end", dag=dag)
 
-# Set all tasks to start after 'start_task'
+# Set dependencies
 begin >> upload_tasks
-
-# Set all tasks to complete before 'end_task'
 upload_tasks >> end
