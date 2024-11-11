@@ -122,7 +122,7 @@ image_directory = 'airflow/data/input/fashion-dataset/fashion-dataset/images'
 image_files = [os.path.join(image_directory, f) for f in os.listdir(image_directory) if f.lower().endswith('.jpg', '.jpeg', '.png')]
 
 # Extract metadata for each image and store in a list
-metadata_list = [extract_metadata(image_file) for image_file in image_files]
+metadata_list = [extract_and_save_metadata(image_file) for image_file in image_files]
 
 # Convert the list of metadata dictionaries into a DataFrame
 df_metadata = pd.DataFrame(metadata_list)
