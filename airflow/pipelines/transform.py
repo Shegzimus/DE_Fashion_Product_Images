@@ -102,18 +102,18 @@ def parse_and_convert_styles_fields(local_directory: str, file_name: str) -> str
     return df.to_json()
 
 
-def parse_and_convert_images_fields(local_directory: str, file_name: str) -> pd.DataFrame:
+def parse_and_convert_images_fields(local_directory: str, file_name: str) -> str:
     """
-    This function reads a specified CSV file containing image metadata, trims rows with extra columns, 
-    extracts 'id' and 'format' from 'filename', converts 'id' to integer and 'format' and 'link' to string, 
-    and returns a DataFrame.
+    This function reads a specified CSV file in the directory, trims rows with extra columns,
+    extracts 'id' and 'format' from 'filename', converts 'id' to integer and 'format' and 'link' to string,
+    and returns a DataFrame as a JSON string.
 
     Parameters:
-    local_directory (str): The path to the directory containing the CSV file.
-    file_name (str): The name of the CSV file to read.
+    local_directory (str): Path to the directory containing the CSV file.
+    file_name (str): Name of the CSV file to read.
 
     Returns:
-    pd.DataFrame: A DataFrame containing the image metadata with trimmed rows and converted columns.
+    str: JSON representation of the DataFrame. The DataFrame contains columns: 'id', 'format', 'link'.
     """
     df = parse_and_trim_csv_file(local_directory, file_name)
 
@@ -131,6 +131,7 @@ def parse_and_convert_images_fields(local_directory: str, file_name: str) -> pd.
     print(df.info())
 
     return df.to_json()
+
 
 
 def save_styles_to_parquet(df_json: str, output_directory: str, file_name: str) -> None:

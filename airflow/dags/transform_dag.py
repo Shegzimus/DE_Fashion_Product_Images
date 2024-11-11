@@ -103,7 +103,7 @@ end = DummyOperator(task_id="end", dag=dag)
 
 
 """
-# Define the dependency between tasks
+Define the dependency between tasks
 """
 
 begin >> [convert_images_task >> convert_styles_task]
