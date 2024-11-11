@@ -16,6 +16,6 @@ original_image_folder = 'opt/airflow/data/input/fashion-dataset/fashion-dataset/
 csv_directory = 'opt/airflow/data/input/fashion-dataset'
 styles_csv_directory = 'opt/airflow/data/input/styles.csv'
 
-
+output_directory = 'opt/airflow/data/output'
 
 greyscale_output_folder = 'opt/airflow/data/output/greyscale'

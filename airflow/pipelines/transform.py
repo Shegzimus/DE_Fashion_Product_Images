@@ -10,9 +10,7 @@ import csv
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.constants import (
-    csv_directory
-)
+
 
 def csv_to_parquet(csv_file_path: str, parquet_file_path: str) -> None:
     """
@@ -70,16 +68,16 @@ def parse_and_trim_csv_file(local_directory: str, file_name: str) -> pd.DataFram
     return df
 
 
-def parse_and_convert_styles_fields(local_directory: str, file_name: str) -> pd.DataFrame:
+def parse_and_convert_styles_fields(local_directory: str, file_name: str) -> str:
     """
-    Read a specified CSV file in the directory, trim rows with extra columns, convert specified columns to integer and string types, and return a DataFrame.
+    Read a specified CSV file in the directory, trim rows with extra columns, convert specified columns to integer and string types, and return a DataFrame as a JSON string.
 
     Parameters:
     local_directory (str): Path to the directory containing the CSV file.
     file_name (str): Name of the CSV file to read.
 
     Returns:
-    pd.DataFrame: DataFrame containing the CSV data with trimmed rows and converted columns.
+    str: JSON representation of the DataFrame.
     """
     df = parse_and_trim_csv_file(local_directory, file_name)
 
@@ -101,7 +99,7 @@ def parse_and_convert_styles_fields(local_directory: str, file_name: str) -> pd.
     # Display DataFrame info to confirm conversions
     print(df.info())
 
-    return df
+    return df.to_json()
 
 
 def parse_and_convert_images_fields(local_directory: str, file_name: str) -> pd.DataFrame:
@@ -132,62 +130,62 @@ def parse_and_convert_images_fields(local_directory: str, file_name: str) -> pd.
     # Display DataFrame info to confirm conversions
     print(df.info())
 
-    return df
+    return df.to_json()
 
 
-def save_styles_to_parquet(output_directory: str, file_name: str) -> None:
+def save_styles_to_parquet(df_json: str, output_directory: str, file_name: str) -> None:
     """
-    Save a DataFrame containing fashion styles data to a Parquet file.
+    Save a DataFrame (passed as JSON) to a Parquet file for styles data.
 
     Parameters:
-    output_directory (str): The directory where the Parquet file will be saved.
-    file_name (str): The name of the Parquet file (without extension).
-
-    The function performs the following steps:
-    1. Ensures the output directory exists.
-    2. Constructs the full path to the output Parquet file.
-    3. Parses and converts the 'styles.csv' file to a DataFrame using the 'parse_and_convert_styles_fields' function.
-    4. Saves the DataFrame to the Parquet file.
-    5. Prints a success message indicating the location of the saved Parquet file.
+    df_json (str): JSON string of the DataFrame data. This string should represent a DataFrame with columns: 'id', 'gender', 'masterCategory', 'subCategory', 'articleType', 'baseColour', 'season', 'usage', 'productDisplayName'.
+    output_directory (str): Directory where the Parquet file will be saved. The directory will be created if it doesn't exist.
+    file_name (str): Name of the Parquet file to be created. The file extension '.parquet' will be added automatically.
 
     Returns:
-    None
+    None: The function does not return any value. It saves the DataFrame to a Parquet file and prints a success message.
     """
+    # Convert JSON string back to DataFrame
+    df = pd.read_json(df_json)
+
     # Ensure the output directory exists
     os.makedirs(output_directory, exist_ok=True)
 
     # Construct the full path to the output Parquet file
     parquet_file_path = os.path.join(output_directory, f"{file_name}.parquet")
 
-    # Parse and convert the styles CSV file to a DataFrame
-    df = parse_and_convert_styles_fields(local_directory= 'airflow/data/input/fashion-dataset', file_name= 'styles.csv')
-    # Save the DataFrame to Parquet format
+    # Save DataFrame to Parquet
     df.to_parquet(parquet_file_path, index=False)
 
     print(f"DataFrame saved to {parquet_file_path}")
 
 
-def save_images_to_parquet(output_directory: str, file_name: str) -> None:
+
+def save_images_to_parquet(df_json: str, output_directory: str, file_name: str) -> None:
     """
-    Save a DataFrame containing image metadata to a Parquet file.
+    Save a DataFrame (passed as JSON) to a Parquet file.
+
 
     Parameters:
-    output_directory (str): The directory where the Parquet file will be saved.
-    file_name (str): The name of the Parquet file (without extension).
+    df_json (str): JSON string of the DataFrame data. This string should represent a DataFrame with columns: 'id', 'format', 'link'.
+    output_directory (str): Directory where the Parquet file will be saved. The directory will be created if it doesn't exist.
+    file_name (str): Name of the Parquet file to be created. The file extension '.parquet' will be added automatically.
 
     Returns:
-    None
+    None: The function does not return any value. It saves the DataFrame to a Parquet file and prints a success message.
     """
+    # Convert JSON string back to DataFrame
+    df = pd.read_json(df_json)
+
     # Ensure the output directory exists
     os.makedirs(output_directory, exist_ok=True)
 
     # Construct the full path to the output Parquet file
     parquet_file_path = os.path.join(output_directory, f"{file_name}.parquet")
 
-    # Parse and convert the images CSV file to a DataFrame
-    df = parse_and_convert_images_fields(local_directory= 'airflow/data/input/fashion-dataset', file_name= 'images.csv')
-    # Save the DataFrame to Parquet format
+    # Save DataFrame to Parquet
     df.to_parquet(parquet_file_path, index=False)
 
     print(f"DataFrame saved to {parquet_file_path}")
+
 

@@ -11,14 +11,19 @@ from airflow.operators.dummy import DummyOperator
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.constants import (
-    kaggle_dataset_download_ref, kaggle_dataset_name, kaggle_dataset_user, 
-    path_to_local_home, original_image_folder, greyscale_output_folder, PROJECT_ID, BUCKET)
+    kaggle_dataset_download_ref, 
+    kaggle_dataset_name, 
+    kaggle_dataset_user, 
+    path_to_local_home, 
+    original_image_folder, 
+    greyscale_output_folder
+    )
 
 from pipelines.extract import (
-  download_and_unzip_kaggle_dataset, 
-  convert_to_greyscale, 
-  extract_and_save_metadata_to_csv
-  )
+    download_and_unzip_kaggle_dataset, 
+    convert_to_greyscale, 
+    extract_and_save_metadata_to_csv
+    )
 
 
 
