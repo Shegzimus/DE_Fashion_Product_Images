@@ -13,9 +13,9 @@ from pipelines.load import upload_folder_to_gcs, create_images_table, create_sty
 
 
 
-# Environment variables
-PROJECT_ID = os.environ.get("GCP_PROJECT_ID") # Retrieve the project ID from the environment variable
-BUCKET = os.environ.get("GCP_GCS_BUCKET")  # Retrieve the bucket name from the environment variable
+# Retrieve variables from Airflow environment
+PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
+BUCKET = os.environ.get("GCP_GCS_BUCKET")
 STAGING = os.environ.get("BQ_DATASET_STAGING")
 WAREHOUSE = os.environ.get("BQ_DATASET_WAREHOUSE")
 

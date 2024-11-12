@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 
-def upload_folder_to_gcs(bucket, local_folder, target_folder_prefix=""):
+def upload_folder_to_gcs(bucket: str, local_folder: str, target_folder_prefix="") -> None:
     """
     This function uploads a local file to a specified Google Cloud Storage (GCS) bucket.
 
@@ -54,7 +54,7 @@ def create_styles_table():
 
 
 
-    
+
 
 
 
