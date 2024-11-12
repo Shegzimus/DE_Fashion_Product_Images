@@ -6,7 +6,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipelines.load import upload_folder_to_gcs
+from pipelines.load import upload_folder_to_gcs, create_images_table, create_styles_table
 
 
 
@@ -16,6 +16,8 @@ from pipelines.load import upload_folder_to_gcs
 # Environment variables
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID") # Retrieve the project ID from the environment variable
 BUCKET = os.environ.get("GCP_GCS_BUCKET")  # Retrieve the bucket name from the environment variable
+STAGING = os.environ.get("BQ_DATASET_STAGING")
+WAREHOUSE = os.environ.get("BQ_DATASET_WAREHOUSE")
 
 # Define the DAG and default args
 default_args = {
@@ -33,8 +35,11 @@ dag = DAG(
     catchup=False,
 )
 
+"""
+Task 0: Define the folder paths and their GCS target prefix
 
-# Define the folder paths and their GCS target prefix
+"""
+
 bucket_name = BUCKET
 folder_paths = [
     {"local_folder": "opt/airflow/data/input/fashion-dataset/images", "gcs_prefix": "fashion-dataset/images"},
@@ -44,7 +49,12 @@ folder_paths = [
     {"local_folder": "opt/airflow/data/output/parquet", "gcs_prefix": "output/parquet"}
 ]
 
-# Dynamically create a task for each folder
+
+
+"""
+Task 1: Upload the specified folders to GCS Bucket
+
+"""
 upload_tasks = []
 for folder in folder_paths:
     task = PythonOperator(
@@ -60,10 +70,26 @@ for folder in folder_paths:
     upload_tasks.append(task)
 
 
+"""
+Task 2: Upload the parquet files to BigQuery
+
+"""
+
+
+"""
+Task 3: Send image files to BigQuery
+
+"""
+
 
 begin = DummyOperator(task_id="begin", dag=dag)
+
+files_uploaded = DummyOperator(task_id="files_uploaded", dag=dag)
+
 end = DummyOperator(task_id="end", dag=dag)
 
 # Set dependencies
-begin >> upload_tasks
-upload_tasks >> end
+begin >> upload_tasks >> files_uploaded
+
+
+files_uploaded >> 

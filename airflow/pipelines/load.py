@@ -46,3 +46,18 @@ def upload_folder_to_gcs(bucket, local_folder, target_folder_prefix=""):
     blob.upload_from_filename(local_file_path)
 
 
+def create_images_table():
+
+
+
+def create_styles_table():
+
+
+
+    
+
+
+
+
+
+
