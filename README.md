@@ -1,9 +1,10 @@
-# ETLt Data Pipeline with Kaggle, Airflow, Celery, Postgres, GCS, BigQuery, Terraform, Redis and Docker
+<!-- # ETLt Data Pipeline with Kaggle, Airflow, Celery, Postgres, GCS, BigQuery, Terraform, Redis and Docker -->
 
 
-## Table of Contents
-- [ETLt Data Pipeline with Kaggle, Airflow, Celery, Postgres, GCS, BigQuery, Terraform, Redis and Docker](#etlt-data-pipeline-with-kaggle-airflow-celery-postgres-gcs-bigquery-terraform-redis-and-docker)
-  - [Table of Contents](#table-of-contents)
+# Table of Contents
+
+
+- [Table of Contents](#table-of-contents)
   - [Motivation](#motivation)
   - [Overview](#overview)
   - [Architecture](#architecture)
