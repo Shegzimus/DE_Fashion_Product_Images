@@ -8,6 +8,7 @@
   - [Overview](#overview)
   - [Architecture](#architecture)
   - [Prerequisites](#prerequisites)
+  - [System Configuration](#system-configuration)
 
 ## Motivation
 I just wanted to build a pipeline that handles large amounts of images and their metadata seemlessly. I imagined supporting a team of machine learning engineers who would need a pipeline with standardized images to feed a developing model. The focus of this project was to sharpen my image parsing skills with python and writing refactorable code for similar purposes in the future.
@@ -37,7 +38,7 @@ This pipeline is designed to:
 4. Docker Installation
 5. Python 3.9 or higher
 
-System Configuration
+## System Configuration
 1. Clone the repository
     ```bash
     git clone https://github.com/Shegzimus/DE_Fashion_Product_Images.git
@@ -81,5 +82,7 @@ System Configuration
     docker-compose up -d
     ```
 
-
-System configuration
+11. Launch the Airflow web UI
+    ```bash
+    open http://localhost:8080
+    ```
