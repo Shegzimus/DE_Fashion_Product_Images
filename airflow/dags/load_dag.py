@@ -61,6 +61,7 @@ for folder in folder_paths:
             "local_folder": folder["local_folder"],
             "target_folder_prefix": folder["gcs_prefix"]
         },
+        provide_context=True,
         dag=dag,
     )
     upload_to_gcs_tasks.append(task)
