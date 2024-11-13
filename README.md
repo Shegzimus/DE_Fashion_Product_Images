@@ -1,9 +1,8 @@
-<!-- # ETLt Data Pipeline with Kaggle, Airflow, Celery, Postgres, GCS, BigQuery, Terraform, Redis and Docker -->
+# ETLt Data Pipeline with Kaggle, Airflow, Celery, Postgres, GCS, BigQuery, Terraform, Redis and Docker
 
 
 # Table of Contents
-
-
+- [ETLt Data Pipeline with Kaggle, Airflow, Celery, Postgres, GCS, BigQuery, Terraform, Redis and Docker](#etlt-data-pipeline-with-kaggle-airflow-celery-postgres-gcs-bigquery-terraform-redis-and-docker)
 - [Table of Contents](#table-of-contents)
   - [Motivation](#motivation)
   - [Overview](#overview)
@@ -12,7 +11,7 @@
   - [System Configuration](#system-configuration)
 
 ## Motivation
-I just wanted to build a pipeline that handles large amounts of images and their metadata seemlessly. I imagined supporting a team of machine learning engineers who would need a pipeline with standardized images to feed a developing model. The focus of this project was to sharpen my image parsing skills with python and writing refactorable code for similar purposes in the future.
+I just wanted to build a pipeline that handles large amounts of images and their metadata seemlessly. I imagined supporting a team of machine learning engineers who would need a pipeline with standardized images to feed a developing model. The focus of this project was to sharpen my image parsing skills with python and writing refactorable code for similar purposes in the future. I attempt to document my thought process in the [dev_logs](dev_logs.md) file.
 
 ## Overview
 This pipeline is designed to:
