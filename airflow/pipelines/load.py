@@ -119,6 +119,27 @@ def create_bigquery_table_callable(dataset_id: str, table_id: str, parquet_file_
     )
 
 
+def process_gcs_paths(**kwargs):
+    """
+    This function processes the output of multiple GCS upload tasks and collects all the GCS paths.
+    It pulls the XCom values from the specified tasks using the provided kwargs, and then prints
+    all the collected GCS paths.
+
+    Parameters:
+    kwargs (dict): Keyword arguments passed to the function. It should contain a 'ti' key, which is an instance of
+                    the TaskInstance class from the Airflow library. The 'ti' instance is used to pull XCom values.
+
+    Returns:
+    None: The function does not return any value. It only prints the collected GCS paths.
+    """
+    gcs_paths = []
+    for task in upload_to_gcs_tasks:
+        task_gcs_paths = kwargs['ti'].xcom_pull(task_ids=task.task_id)
+        gcs_paths.extend(task_gcs_paths)
+    print("All GCS paths:", gcs_paths)
+
+
+
 
     
 
