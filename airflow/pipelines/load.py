@@ -8,22 +8,20 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 
-def upload_folder_to_gcs(bucket: str, local_folder: str, target_folder_prefix="") -> None:
+def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_prefix="") -> list:
     """
-    This function uploads a local file to a specified Google Cloud Storage (GCS) bucket.
-
-    The function uses the google-cloud-storage library to interact with GCS. It also includes a workaround
-    for a known issue where uploading files larger than 6 MB may result in a timeout error.
+    Uploads a local folder to a specified Google Cloud Storage (GCS) bucket, preserving
+    the folder structure in GCS. Returns the list of GCS paths for all uploaded files.
 
     Parameters:
-    bucket (str): The name of the GCS bucket to upload the file to.
-    local_file (str): The path and filename of the local file to be uploaded.
-    target_file (str): The path and filename in the GCS bucket where the file will be stored.
+    bucket_name (str): The name of the GCS bucket to upload to.
+    local_folder (str): The path of the local folder to upload.
+    target_folder_prefix (str): The prefix path in GCS where the files will be stored.
 
     Ref: https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-python
 
     Returns:
-    None
+    list: List of file paths in GCS where files were uploaded.
     """
 
     # Adjust GCS upload settings for large files
@@ -33,7 +31,7 @@ def upload_folder_to_gcs(bucket: str, local_folder: str, target_folder_prefix=""
 
     # Create a client object and get the specified bucket
     client = storage.Client()
-    bucket = client.bucket(bucket)
+    bucket = client.bucket(bucket_name)
 
     # Prepare a list to store the GCS paths of uploaded files
     gcs_paths = []
@@ -52,8 +50,8 @@ def upload_folder_to_gcs(bucket: str, local_folder: str, target_folder_prefix=""
             blob.upload_from_filename(local_file_path)
 
             # Log or add to list the GCS path of uploaded file
-            gcs_paths.append(f"gs://{bucket}/{target_file_path}")
-            print(f"Uploaded {local_file_path} to gs://{bucket}/{target_file_path}")
+            gcs_paths.append(f"gs://{bucket_name}/{target_file_path}")
+            print(f"Uploaded {local_file_path} to gs://{bucket_name}/{target_file_path}")
 
     return gcs_paths
 

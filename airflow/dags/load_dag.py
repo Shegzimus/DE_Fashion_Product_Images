@@ -6,8 +6,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipelines.load import upload_folder_to_gcs, create_bigquery_table_callable, 
-
+from pipelines.load import upload_folder_to_gcs, create_bigquery_table_callable
 
 
 
@@ -55,7 +54,7 @@ folder_paths = [
 Task 1: Upload the specified folders to GCS Bucket
 
 """
-upload_to_GCS_tasks = []
+upload_to_gcs_tasks = []
 for folder in folder_paths:
     task = PythonOperator(
         task_id=f"upload_{os.path.basename(folder['local_folder'])}_to_gcs",
@@ -67,14 +66,19 @@ for folder in folder_paths:
         },
         dag=dag,
     )
-    upload_tasks.append(task)
+    upload_to_gcs_tasks.append(task)
 
 
 """
 Task 2: Create BigQuery Tables
 
 """
-create_images_table = 
+create_images_table_task = create_bigquery_table_callable(
+    dataset_id='',
+    table_id= '',
+    parquet_file_path= '',
+)
+
 
 
 
@@ -97,7 +101,7 @@ files_uploaded = DummyOperator(task_id="files_uploaded", dag=dag)
 end = DummyOperator(task_id="end", dag=dag)
 
 # Set dependencies
-begin >> upload_tasks >> files_uploaded
+begin >> upload_to_gcs_tasks >> files_uploaded
 
 
 files_uploaded
