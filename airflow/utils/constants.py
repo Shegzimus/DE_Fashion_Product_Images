@@ -21,3 +21,4 @@ styles_csv_directory = 'opt/airflow/data/input/styles.csv'
 output_directory = 'opt/airflow/data/output'
 
 greyscale_output_folder = 'opt/airflow/data/output/greyscale'
+
