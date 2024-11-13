@@ -9,9 +9,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pipelines.load import upload_folder_to_gcs, create_bigquery_table_callable
 
 
-
-
-
 # Retrieve variables from Airflow environment
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 BUCKET = os.environ.get("GCP_GCS_BUCKET")
