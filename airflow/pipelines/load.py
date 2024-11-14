@@ -4,56 +4,182 @@ from google.cloud import storage, bigquery
 from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyTableOperator
 import pyarrow.parquet as pq
 
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+def configure_gcs_upload_settings():
+    """
+    Configures the settings for uploading files to Google Cloud Storage (GCS).
+
+    This function adjusts the maximum multipart size and default chunk size for GCS uploads.
+    By increasing these settings, the function allows for efficient uploading of large files.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
+    storage.blob._MAX_MULTIPART_SIZE = 5 * 1024 * 1024  # 5 MB
+    storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024 * 1024  # 5 MB
+
+
+
+
+def initialize_gcs_bucket(bucket_name: str) -> storage.bucket.Bucket:
+    """
+    Initializes a Google Cloud Storage (GCS) bucket using the provided bucket name.
+
+    This function creates a client object using the Google Cloud Storage library and then
+    retrieves the specified bucket from the client. If the bucket does not exist, this function
+    will raise a NotFound exception.
+
+    Parameters:
+    bucket_name (str): The name of the GCS bucket to initialize.
+
+    Returns:
+    storage.bucket.Bucket: The initialized GCS bucket object.
+    """
+    client = storage.Client()
+    return client.bucket(bucket_name)
+
+
+def generate_gcs_target_path(local_file_path: str, local_folder: str, target_folder_prefix: str) -> str:
+    """
+    Generates a target path in Google Cloud Storage (GCS) for a local file, preserving the folder structure.
+
+    This function takes the local file path, the local folder path, and a target folder prefix as input.
+    It calculates the relative path of the local file from the local folder, then joins it with the target folder prefix.
+    The resulting path is formatted to replace backslashes with forward slashes, ensuring compatibility with GCS.
+
+    Parameters:
+    local_file_path (str): The full path of the local file.
+    local_folder (str): The path of the local folder containing the file.
+    target_folder_prefix (str): The prefix path in GCS where the file will be stored.
+
+    Returns:
+    str: The target path in GCS, preserving the folder structure.
+    """
+    relative_path = os.path.relpath(local_file_path, local_folder)
+    return os.path.join(target_folder_prefix, relative_path).replace("\\", "/")
+
+
+
+
+def upload_file_to_gcs(bucket, local_file_path: str, target_file_path: str):
+    """
+    Uploads a local file to a specified Google Cloud Storage (GCS) bucket.
+
+    This function takes a Google Cloud Storage (GCS) bucket object, a local file path, and a target file path.
+    It creates a blob object in the specified bucket using the target file path, then uploads the local file
+    to the GCS bucket using the blob's `upload_from_filename` method.
+
+    Parameters:
+    bucket (storage.bucket.Bucket): The Google Cloud Storage (GCS) bucket object to upload the file to.
+    local_file_path (str): The full path of the local file to be uploaded.
+    target_file_path (str): The path in the GCS bucket where the file will be stored.
+
+    Returns:
+    None: The function does not return any value. It uploads the file to the GCS bucket.
+    """
+    blob = bucket.blob(target_file_path)
+    blob.upload_from_filename(local_file_path)
+
+
+def is_parquet_file(filename: str) -> bool:
+    """
+    Checks if a given filename has a .parquet extension.
+
+    Parameters:
+    filename (str): The name of the file to check.
+
+    Returns:
+    bool: True if the filename ends with ".parquet", False otherwise.
+    """
+    return filename.endswith(".parquet")
 
 
 
 def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_prefix="") -> list:
     """
-    Uploads a local folder to a specified Google Cloud Storage (GCS) bucket, preserving
-    the folder structure in GCS. Returns the list of GCS paths for all uploaded files.
+    Uploads all files in a local folder to a specified Google Cloud Storage (GCS) bucket, preserving
+    the folder structure in GCS. Returns the list of GCS paths for any .parquet files uploaded.
 
     Parameters:
     bucket_name (str): The name of the GCS bucket to upload to.
     local_folder (str): The path of the local folder to upload.
-    target_folder_prefix (str): The prefix path in GCS where the files will be stored.
-
-    Ref: https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-python
+    target_folder_prefix (str, optional): The prefix path in GCS where the files will be stored.
+                                         Defaults to an empty string.
 
     Returns:
-    list: List of file paths in GCS where files were uploaded.
+    list: List of GCS paths where .parquet files were uploaded.
     """
+    configure_gcs_upload_settings()
+    bucket = initialize_gcs_bucket(bucket_name)
+    parquet_gcs_paths = []
 
-    # Adjust GCS upload settings for large files
-    # Ref: https://github.com/googleapis/python-storage/issues/74
-    storage.blob._MAX_MULTIPART_SIZE = 5 * 1024 * 1024  # 5 MB
-    storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024 * 1024  # 5 MB
-
-    # Create a client object and get the specified bucket
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-
-    # Prepare a list to store the GCS paths of uploaded files
-    gcs_paths = []
-
-    # Walk through the local folder
     for root, _, files in os.walk(local_folder):
         for file in files:
-            # Full local path
             local_file_path = os.path.join(root, file)
-            # Generate GCS target path by preserving folder structure
-            relative_path = os.path.relpath(local_file_path, local_folder)
-            target_file_path = os.path.join(target_folder_prefix, relative_path).replace( "/")
+            target_file_path = generate_gcs_target_path(local_file_path, local_folder, target_folder_prefix)
+            upload_file_to_gcs(bucket, local_file_path, target_file_path)
 
-            # Upload file to GCS
-            blob = bucket.blob(target_file_path)
-            blob.upload_from_filename(local_file_path)
+            if is_parquet_file(file):
+                parquet_gcs_paths.append(f"gs://{bucket_name}/{target_file_path}")
+                print(f"Uploaded {local_file_path} to gs://{bucket_name}/{target_file_path}")
 
-            # Log or add to list the GCS path of uploaded file
-            gcs_paths.append(f"gs://{bucket_name}/{target_file_path}")
-            print(f"Uploaded {local_file_path} to gs://{bucket_name}/{target_file_path}")
+    return parquet_gcs_paths
 
-    return gcs_paths
+
+
+
+
+
+
+# def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_prefix="") -> list:
+#     """
+#     Uploads all files in a local folder to a specified Google Cloud Storage (GCS) bucket, preserving
+#     the folder structure in GCS. Returns the list of GCS paths for any .parquet files uploaded.
+
+#     Parameters:
+#     bucket_name (str): The name of the GCS bucket to upload to.
+#     local_folder (str): The path of the local folder to upload.
+#     target_folder_prefix (str): The prefix path in GCS where the files will be stored.
+
+#     Returns:
+#     list: List of GCS paths where .parquet files were uploaded.
+#     """
+
+#     # Adjust GCS upload settings for large files
+#     storage.blob._MAX_MULTIPART_SIZE = 5 * 1024 * 1024  # 5 MB
+#     storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024 * 1024  # 5 MB
+
+#     # Create a client object and get the specified bucket
+#     client = storage.Client()
+#     bucket = client.bucket(bucket_name)
+
+#     # Prepare a list to store the GCS paths of uploaded .parquet files
+#     parquet_gcs_paths = []
+
+#     # Walk through the local folder
+#     for root, _, files in os.walk(local_folder):
+#         for file in files:
+#             # Full local path
+#             local_file_path = os.path.join(root, file)
+#             # Generate GCS target path by preserving folder structure
+#             relative_path = os.path.relpath(local_file_path, local_folder)
+#             target_file_path = os.path.join(target_folder_prefix, relative_path).replace("\\", "/")
+
+#             # Upload file to GCS
+#             blob = bucket.blob(target_file_path)
+#             blob.upload_from_filename(local_file_path)
+
+#             # If the file is a .parquet file, add its GCS path to the list
+#             if file.endswith(".parquet"):
+#                 parquet_gcs_paths.append(f"gs://{bucket_name}/{target_file_path}")
+#                 print(f"Uploaded {local_file_path} to gs://{bucket_name}/{target_file_path}")
+
+#     return parquet_gcs_paths
 
 
 def extract_schema_from_parquet(file_path: str) -> list[bigquery.SchemaField]:
