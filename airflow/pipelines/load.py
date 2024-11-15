@@ -23,9 +23,6 @@ def configure_gcs_upload_settings():
     storage.blob._MAX_MULTIPART_SIZE = 5 * 1024 * 1024  # 5 MB
     storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024 * 1024  # 5 MB
 
-
-
-
 def initialize_gcs_bucket(bucket_name: str) -> storage.bucket.Bucket:
     """
     Initializes a Google Cloud Storage (GCS) bucket using the provided bucket name.
@@ -64,8 +61,6 @@ def generate_gcs_target_path(local_file_path: str, local_folder: str, target_fol
     return os.path.join(target_folder_prefix, relative_path).replace("\\", "/")
 
 
-
-
 def upload_file_to_gcs(bucket, local_file_path: str, target_file_path: str):
     """
     Uploads a local file to a specified Google Cloud Storage (GCS) bucket.
@@ -99,7 +94,6 @@ def is_parquet_file(filename: str) -> bool:
     return filename.endswith(".parquet")
 
 
-
 def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_prefix="") -> list:
     """
     Uploads all files in a local folder to a specified Google Cloud Storage (GCS) bucket, preserving
@@ -129,10 +123,6 @@ def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_pref
                 print(f"Uploaded {local_file_path} to gs://{bucket_name}/{target_file_path}")
 
     return parquet_gcs_paths
-
-
-
-
 
 
 
@@ -261,7 +251,8 @@ def process_gcs_paths(**kwargs):
     gcs_paths = []
     for task in upload_to_gcs_tasks:
         task_gcs_paths = kwargs['ti'].xcom_pull(task_ids=task.task_id)
-        gcs_paths.extend(task_gcs_paths)
+        if task_gcs_paths:  # Check if there's any output to avoid adding None
+            gcs_paths.extend(task_gcs_paths)
     print("All GCS paths:", gcs_paths)
 
 
