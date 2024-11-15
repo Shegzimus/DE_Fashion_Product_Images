@@ -2,6 +2,8 @@ import sys
 import os
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -84,20 +86,37 @@ collect_gcs_paths = PythonOperator(
 Task 2: Create BigQuery Tables
 
 """
-create_images_table_task = create_bigquery_table_callable(
+create_bq_tables_task = create_bigquery_table_callable(
     dataset_id='',
     table_id= '',
     parquet_file_path= '',
 )
 
 
-
-
 """
 Task 2: Upload the parquet files to BigQuery
 
 """
+transfer_images_to_bigquery = GCSToBigQueryOperator(
+    task_id="transfer_images_to_bigquery",
+    bucket=BUCKET,
+    source_objects='',
+    destination_project_dataset_table=f"{PROJECT_ID}.{STAGING}.fashion_dataset.images",
+    write_disposition="WRITE_APPEND",
+    create_disposition="CREATE_IF_NEEDED",
+    dag=dag,
+)
 
+
+transfer_styles_pq_to_bigquery = GCSToBigQueryOperator(
+    task_id="transfer_styles_pq_to_bigquery",
+    bucket=BUCKET,
+    source_objects='',
+    destination_project_dataset_table=f"{PROJECT_ID}.{STAGING}.fashion_dataset.styles",
+    write_disposition="WRITE_APPEND",
+    create_disposition="CREATE_IF_NEEDED",
+    dag=dag,
+)
 
 """
 Task 3: Send image files to BigQuery
@@ -112,6 +131,7 @@ files_uploaded = DummyOperator(task_id="files_uploaded", dag=dag)
 end = DummyOperator(task_id="end", dag=dag)
 
 # Set dependencies
+begin >>
 for task in upload_to_gcs_tasks:
     task >> collect_gcs_paths
 
