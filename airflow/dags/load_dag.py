@@ -8,7 +8,9 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipelines.load import upload_folder_to_gcs, process_gcs_paths, create_bigquery_table_callable
+from pipelines.load import upload_folder_to_gcs, bucket_to_bq
+
+from utils.constants import styles_parquet_path, images_parquet_path
 
 
 # Retrieve variables from Airflow environment
@@ -97,24 +99,19 @@ create_bq_tables_task = create_bigquery_table_callable(
 Task 2: Upload the parquet files to BigQuery
 
 """
-transfer_images_to_bigquery = GCSToBigQueryOperator(
-    task_id="transfer_images_to_bigquery",
-    bucket=BUCKET,
-    source_objects='',
-    destination_project_dataset_table=f"{PROJECT_ID}.{STAGING}.fashion_dataset.images",
-    write_disposition="WRITE_APPEND",
-    create_disposition="CREATE_IF_NEEDED",
+transfer_images_pq_to_bigquery = PythonOperator(
+    task_id='transfer_images_pq_to_bigquery',
+    python_callable=bucket_to_bq(dataset_id='de_dataset_staging',
+                                 file_path= images_parquet_path),
+    provide_context=True,
     dag=dag,
 )
 
-
-transfer_styles_pq_to_bigquery = GCSToBigQueryOperator(
-    task_id="transfer_styles_pq_to_bigquery",
-    bucket=BUCKET,
-    source_objects='',
-    destination_project_dataset_table=f"{PROJECT_ID}.{STAGING}.fashion_dataset.styles",
-    write_disposition="WRITE_APPEND",
-    create_disposition="CREATE_IF_NEEDED",
+transfer_styles_pq_to_bigquery = PythonOperator(
+    task_id='transfer_styles_pq_to_bigquery',
+    python_callable=bucket_to_bq(dataset_id='de_dataset_staging',
+                                 file_path= styles_parquet_path),
+    provide_context=True,
     dag=dag,
 )
 

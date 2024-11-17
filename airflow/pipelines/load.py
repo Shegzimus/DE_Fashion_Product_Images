@@ -3,7 +3,7 @@ import os
 from google.cloud import storage, bigquery
 from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyTableOperator
 import pyarrow.parquet as pq
-
+import gcsfs
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -125,70 +125,14 @@ def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_pref
     return parquet_gcs_paths
 
 
+def extract_schema_from_parquet(file_path: str) -> list[bigquery.SchemaField]: 
+    # Create a GCS filesystem object
+    fs = gcsfs.GCSFileSystem()
 
-# def upload_folder_to_gcs(bucket_name: str, local_folder: str, target_folder_prefix="") -> list:
-#     """
-#     Uploads all files in a local folder to a specified Google Cloud Storage (GCS) bucket, preserving
-#     the folder structure in GCS. Returns the list of GCS paths for any .parquet files uploaded.
-
-#     Parameters:
-#     bucket_name (str): The name of the GCS bucket to upload to.
-#     local_folder (str): The path of the local folder to upload.
-#     target_folder_prefix (str): The prefix path in GCS where the files will be stored.
-
-#     Returns:
-#     list: List of GCS paths where .parquet files were uploaded.
-#     """
-
-#     # Adjust GCS upload settings for large files
-#     storage.blob._MAX_MULTIPART_SIZE = 5 * 1024 * 1024  # 5 MB
-#     storage.blob._DEFAULT_CHUNKSIZE = 5 * 1024 * 1024  # 5 MB
-
-#     # Create a client object and get the specified bucket
-#     client = storage.Client()
-#     bucket = client.bucket(bucket_name)
-
-#     # Prepare a list to store the GCS paths of uploaded .parquet files
-#     parquet_gcs_paths = []
-
-#     # Walk through the local folder
-#     for root, _, files in os.walk(local_folder):
-#         for file in files:
-#             # Full local path
-#             local_file_path = os.path.join(root, file)
-#             # Generate GCS target path by preserving folder structure
-#             relative_path = os.path.relpath(local_file_path, local_folder)
-#             target_file_path = os.path.join(target_folder_prefix, relative_path).replace("\\", "/")
-
-#             # Upload file to GCS
-#             blob = bucket.blob(target_file_path)
-#             blob.upload_from_filename(local_file_path)
-
-#             # If the file is a .parquet file, add its GCS path to the list
-#             if file.endswith(".parquet"):
-#                 parquet_gcs_paths.append(f"gs://{bucket_name}/{target_file_path}")
-#                 print(f"Uploaded {local_file_path} to gs://{bucket_name}/{target_file_path}")
-
-#     return parquet_gcs_paths
-
-
-def extract_schema_from_parquet(file_path: str) -> list[bigquery.SchemaField]:
-    """
-    Extracts the schema from a Parquet file and converts it to a format compatible with Google BigQuery.
-
-    This function reads the Parquet file schema using the pyarrow library, then converts the schema
-    from PyArrow format to Google BigQuery format. It maps PyArrow types to BigQuery types, and defaults
-    to STRING for any unrecognized types.
-
-    Parameters:
-    file_path (str): The path to the Parquet file.
-
-    Returns:
-    List[bigquery.SchemaField]: A list of BigQuery SchemaField objects representing the table schema.
-    """
-    # Read the Parquet file schema using pyarrow
-    parquet_file = pq.ParquetFile(file_path)
-    schema = parquet_file.schema_arrow
+    # Open the file using GCSFS
+    with fs.open(file_path, 'rb') as f:
+        parquet_file = pq.ParquetFile(f)
+        schema = parquet_file.schema_arrow
 
     # Convert PyArrow schema to BigQuery schema fields
     bq_schema = []
@@ -210,7 +154,6 @@ def extract_schema_from_parquet(file_path: str) -> list[bigquery.SchemaField]:
 
         bq_schema.append(bigquery.SchemaField(name=field.name, field_type=bq_type))
     return bq_schema
-
 
 def create_bigquery_table_callable(dataset_id: str, table_id: str, parquet_file_path: str) -> None:
     """
@@ -257,7 +200,98 @@ def process_gcs_paths(**kwargs):
 
 
 
+#######################################
+def initialize_bq_client(): 
+    """
+    This function initializes a BigQuery client.
+    """
+    client = bigquery.Client()
+    return client
 
-    
+def read_file_from_gcs(file_path:str)-> None:
+    """
+    This function reads a file from a Google Cloud Storage (GCS) bucket and returns its content as bytes.
+
+    Parameters:
+    file_path (str): The path to the file in the GCS bucket, including the bucket name and file path.
+
+    Returns:
+    bytes: The content of the file as bytes.
+    """
+    fs = gcsfs.GCSFileSystem()
+    with fs.open(file_path, "rb") as source_file:
+        return source_file.read()
+
+
+def create_table(dataset_id, file_path, client):
+    """
+    This function creates a table in a specified BigQuery dataset using a Parquet file from a Google Cloud Storage (GCS) bucket.
+
+    Parameters:
+    dataset_id (str): The ID of the BigQuery dataset to create the table in.
+    file_path (str): The path to the Parquet file in the GCS bucket, including the bucket name and file path.
+    client (bigquery.Client): The BigQuery client to use for creating the table.
+
+    Returns:
+    tuple: A tuple containing the ID of the created table and its reference. If an error occurs, returns (None, None).
+
+    Raises:
+    Exception: If an error occurs while creating the table.
+    """
+    try:
+        # Extract schema from Parquet file
+        schema_fields = extract_schema_from_parquet(file_path)
+
+        # Derive table ID from file path
+        table_id = file_path.split("/")[-1].split(".")[0]
+
+        # Reference dataset and table
+        dataset_ref = client.dataset(dataset_id)
+        table_ref = dataset_ref.table(table_id)
+
+        # Create table with schema
+        table = bigquery.Table(table_ref)
+        table.schema = schema_fields
+        table = client.create_table(table)
+        print(f"Created table {table_id} in dataset {dataset_id}")
+
+
+        # Extract table ID from table reference
+        return table_id, table_ref
+
+    except Exception as e:
+        print(f"Error creating table {table_id}: {e}")
+        return None, None
+ 
+
+def bucket_to_bq(dataset_id: str, file_path: str)-> None:
+    """
+    This function uploads a Parquet file from a Google Cloud Storage (GCS) bucket to a specified BigQuery dataset.
+
+    Parameters:
+    dataset_id (str): The ID of the BigQuery dataset to upload the file to.
+    file_path (str): The path to the Parquet file in the GCS bucket, including the bucket name and file path.
+
+    Returns:
+    None
+    """
+    client = bigquery.Client()
+
+    file_data = read_file_from_gcs(file_path)
+
+    # Create table using extracted pq schema
+    table_id, table_ref = create_table(dataset_id, file_path, client)
+
+    # Upload Parquet file to BigQuery
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = bigquery.SourceFormat.PARQUET
+    job_config.write_disposition = bigquery.WriteDisposition.WRITE_APPEND
+    job_config.create_disposition = bigquery.CreateDisposition.CREATE_IF_NEEDED
+
+    # with open(file_path, "rb") as source_file:
+    #     job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+    # job.result()
+
+    print(f"Uploaded {file_path} to BigQuery table {table_id}")
 
 
