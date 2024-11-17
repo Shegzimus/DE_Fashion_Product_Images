@@ -22,3 +22,7 @@ output_directory = 'opt/airflow/data/output'
 
 greyscale_output_folder = 'opt/airflow/data/output/greyscale'
 
+
+styles_parquet_path = 'gs://de_data_lake_fashionimages-441305//raw/output/parquet/styles.parquet'
+
+images_parquet_path = 'gs://de_data_lake_fashionimages-441305//raw/output/parquet/images.parquet'
