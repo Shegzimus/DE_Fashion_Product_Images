@@ -4,9 +4,15 @@ from google.cloud import storage, bigquery
 from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyTableOperator
 import pyarrow.parquet as pq
 import gcsfs
+import tqdm
+import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
+"""
+LOCAL TO GCS FUNCTIONS
+"""
 def configure_gcs_upload_settings():
     """
     Configures the settings for uploading files to Google Cloud Storage (GCS).
@@ -178,29 +184,31 @@ def create_bigquery_table_callable(dataset_id: str, table_id: str, parquet_file_
     )
 
 
-def process_gcs_paths(**kwargs):
-    """
-    This function processes the output of multiple GCS upload tasks and collects all the GCS paths.
-    It pulls the XCom values from the specified tasks using the provided kwargs, and then prints
-    all the collected GCS paths.
+# def process_gcs_paths(**kwargs):
+#     """
+#     This function processes the output of multiple GCS upload tasks and collects all the GCS paths.
+#     It pulls the XCom values from the specified tasks using the provided kwargs, and then prints
+#     all the collected GCS paths.
 
-    Parameters:
-    kwargs (dict): Keyword arguments passed to the function. It should contain a 'ti' key, which is an instance of
-                    the TaskInstance class from the Airflow library. The 'ti' instance is used to pull XCom values.
+#     Parameters:
+#     kwargs (dict): Keyword arguments passed to the function. It should contain a 'ti' key, which is an instance of
+#                     the TaskInstance class from the Airflow library. The 'ti' instance is used to pull XCom values.
 
-    Returns:
-    None: The function does not return any value. It only prints the collected GCS paths.
-    """
-    gcs_paths = []
-    for task in upload_to_gcs_tasks:
-        task_gcs_paths = kwargs['ti'].xcom_pull(task_ids=task.task_id)
-        if task_gcs_paths:  # Check if there's any output to avoid adding None
-            gcs_paths.extend(task_gcs_paths)
-    print("All GCS paths:", gcs_paths)
+#     Returns:
+#     None: The function does not return any value. It only prints the collected GCS paths.
+#     """
+#     gcs_paths = []
+#     for task in upload_to_gcs_tasks:
+#         task_gcs_paths = kwargs['ti'].xcom_pull(task_ids=task.task_id)
+#         if task_gcs_paths:  # Check if there's any output to avoid adding None
+#             gcs_paths.extend(task_gcs_paths)
+#     print("All GCS paths:", gcs_paths)
 
 
 
-#######################################
+"""
+GCS TO BIGQUERY (PARQUET)
+"""
 def initialize_bq_client(): 
     """
     This function initializes a BigQuery client.
@@ -264,7 +272,7 @@ def create_table(dataset_id, file_path, client):
         return None, None
  
 
-def bucket_to_bq(dataset_id: str, file_path: str)-> None:
+def parquet_bucket_to_bq(dataset_id: str, file_path: str)-> None:
     """
     This function uploads a Parquet file from a Google Cloud Storage (GCS) bucket to a specified BigQuery dataset.
 
@@ -275,6 +283,8 @@ def bucket_to_bq(dataset_id: str, file_path: str)-> None:
     Returns:
     None
     """
+    configure_gcs_upload_settings()
+
     client = bigquery.Client()
 
     file_data = read_file_from_gcs(file_path)
@@ -295,3 +305,116 @@ def bucket_to_bq(dataset_id: str, file_path: str)-> None:
     print(f"Uploaded {file_path} to BigQuery table {table_id}")
 
 
+"""
+IMAGE METADATA TO BIGQUERY TABLE
+
+"""
+
+def get_gcs_metadata(bucket_name: str, folder_path: str) -> list:
+    """
+    Collects metadata for all blobs in a specified GCS folder.
+
+    Parameters:
+    - bucket_name (str): The name of the GCS bucket.
+    - folder_path (str): The folder path in the GCS bucket to loop through.
+
+    Returns:
+    - list: A list of dictionaries containing metadata for each blob in the folder.
+    """
+    bucket = initialize_gcs_bucket(bucket_name)
+    
+    # Ensure folder path ends with a slash for proper prefix filtering
+    if not folder_path.endswith('/'):
+        folder_path += '/'
+
+    # List blobs in the specified folder
+    blobs = bucket.list_blobs(prefix=folder_path)
+
+    metadata = []
+    for blob in blobs:
+        metadata.append({
+            'image_id': os.path.basename(blob.name),
+            "gcs_path": f"gs://{bucket_name}/{blob.name}",
+            "uploaded_date": blob.time_created.date() if blob.time_created else None,
+            "image_size": blob.size,
+            "blob_content_type": blob.content_type,  # Correct property name
+            "blob_size": blob.size
+        })
+    print(metadata)
+    return metadata
+
+
+def infer_bigquery_type(value):
+    """
+    Infers the BigQuery data type from a Python value.
+
+    Parameters:
+    - value: The Python value to infer the type for.
+
+    Returns:
+    - str: The corresponding BigQuery data type.
+    """
+    if isinstance(value, int):
+        return "INTEGER"
+    elif isinstance(value, float):
+        return "FLOAT"
+    elif isinstance(value, bool):
+        return "BOOLEAN"
+    elif isinstance(value, str):
+        return "STRING"
+    elif isinstance(value, dict):
+        return "RECORD"
+    elif isinstance(value, list):
+        return "ARRAY"
+    elif isinstance(value, datetime.date):
+        return "DATE"
+    elif isinstance(value, datetime.datetime):
+        return "TIMESTAMP"
+    else:
+        return "STRING"  # Default fallback
+    
+
+def upload_metadata_to_bigquery(bucket_name, folder_path, dataset_id, table_id):
+    client = initialize_bq_client()
+    table_ref = client.dataset(dataset_id).table(table_id)
+
+    metadata = get_gcs_metadata(bucket_name, folder_path)
+
+    if not metadata:
+        print("No metadata found. Skipping table creation.")
+        return
+    
+    try:
+        # Check if the table exists
+        table = client.get_table(table_ref)
+        print(f"Table {table_id} already exists.")
+    except NotFound:
+        # Infer schema from the metadata
+        if not metadata:
+            raise ValueError("Cannot create a table without metadata to infer the schema.")
+
+        inferred_schema = []
+        sample_record = metadata[0]
+        for key, value in sample_record.items():
+            bigquery_type = infer_bigquery_type(value)
+            inferred_schema.append({"name": key, "type": bigquery_type, "mode": "NULLABLE"})
+
+        # Create the table with the inferred schema
+        schema = [bigquery.SchemaField(**field) for field in inferred_schema]
+        table = bigquery.Table(table_ref, schema=schema)
+        table = client.create_table(table)
+        print(f"Table {table_id} created successfully with inferred schema: {schema}")
+
+    print("Uploading metadata to BigQuery...")
+    for chunk in tqdm(range(0, len(metadata), 1000), desc="Inserting Rows", unit="chunk"):
+        # Insert a batch of rows (1000 at a time, for example)
+        batch = metadata[chunk:chunk + 1000]
+        errors = client.insert_rows_json(table, batch)
+
+        if errors:
+            print(f"Encountered errors while inserting rows: {errors}")
+        else:
+            # The batch was inserted successfully, tqdm will update
+            pass
+
+    print("Metadata uploaded successfully.")
