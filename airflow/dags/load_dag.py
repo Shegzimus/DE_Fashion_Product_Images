@@ -8,9 +8,9 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipelines.load import upload_folder_to_gcs, parquet_bucket_to_bq
+from pipelines.load import upload_folder_to_gcs, parquet_bucket_to_bq, upload_metadata_to_bigquery
 
-from utils.constants import styles_parquet_path, images_parquet_path
+from utils.constants import styles_parquet_path, images_parquet_path, greyscale_images_path, original_image_path
 
 
 # Retrieve variables from Airflow environment
@@ -92,10 +92,36 @@ transfer_styles_pq_to_bigquery = PythonOperator(
 )
 
 """
-Task 3: Send image files to BigQuery
+Task 3: Send image metadata to BigQuery
 
 """
+upload_org_img_metadata_to_bigquery = PythonOperator(
+    task_id='upload_metadata_to_bigquery',
+    python_callable=upload_metadata_to_bigquery,
+    provide_context=True,
+    dag=dag,
+    op_kwargs={
+        "bucket_name": BUCKET,
+        "folder_path": original_image_path,
+        "dataset_id": STAGING,
+        "table_id": "original_metadata"
+    },
+    dag=dag
+)
 
+upload_greyscale_metadata_to_bigquery = PythonOperator(
+    task_id='upload_metadata_to_bigquery',
+    python_callable=upload_metadata_to_bigquery,
+    provide_context=True,
+    dag=dag,
+    op_kwargs={
+        "bucket_name": BUCKET,
+        "folder_path": greyscale_images_path,
+        "dataset_id": STAGING,
+        "table_id": "greyscale_metadata"
+    },
+    dag=dag
+)
 
 begin = DummyOperator(task_id="begin", dag=dag)
 
@@ -103,9 +129,12 @@ files_uploaded = DummyOperator(task_id="files_uploaded", dag=dag)
 
 end = DummyOperator(task_id="end", dag=dag)
 
+
+
 # Set dependencies
-begin >>
+
 for task in upload_to_gcs_tasks:
-    task >> [transfer_images_pq_to_bigquery, transfer_styles_pq_to_bigquery]
+    task >> [transfer_images_pq_to_bigquery, transfer_styles_pq_to_bigquery] >> files_uploaded
 
 
+files_uploaded >> transfer_images_pq_to_bigquery >> transfer_styles_pq_to_bigquery >> upload_greyscale_metadata_to_bigquery >> upload_org_img_metadata_to_bigquery >> end
