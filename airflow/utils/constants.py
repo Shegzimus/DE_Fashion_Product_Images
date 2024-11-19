@@ -21,3 +21,5 @@ greyscale_output_folder = 'opt/airflow/data/output/greyscale'
 # GCS PATHS
 styles_parquet_path = 'gs://de_data_lake_fashionimages-441305//raw/output/parquet/styles.parquet'
 images_parquet_path = 'gs://de_data_lake_fashionimages-441305//raw/output/parquet/images.parquet'
+greyscale_images_path = 'de_data_lake_fashionimages-441305//raw/output/greyscale'
+original_image_path = 'de_data_lake_fashionimages-441305//raw/input/fashion-dataset/images'
