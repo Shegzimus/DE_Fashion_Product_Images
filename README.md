@@ -1,4 +1,6 @@
-![Architecture](assets/archi.jpg)
+![Architecture](assets/archi.jpg)\
+ETL Data Pipeline with Kaggle, Airflow, Celery, PostgreSQL, Google Cloud Storage, BigQuery and Terraform.
+
 # Table of Contents
 
 - [Table of Contents](#table-of-contents)
