@@ -22,7 +22,7 @@ This pipeline is designed to:
 ## Key Assumptions
 
 ## Architecture
-
+![Architecture](assets/archi.jpg)
 
 1. **Kaggle API**: Source of the data.
 2. **Apache Airflow & Celery**: Orchestrates the ETL process and manages task distribution.
