@@ -10,3 +10,7 @@ airflow/data/output/parquet
 airflow/opt
 airflow/pipelines/lab.py
 airflow/pipelines/sparktest.py
+airflow/pipelines/__pycache__
+airflow/dags/__pycache__
+airflow/logs/
+airflow/utils/__pycache__

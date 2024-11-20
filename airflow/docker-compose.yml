@@ -13,7 +13,9 @@ x-airflow-common:
     - ./logs:/opt/airflow/logs
     - ./pipelines:/opt/airflow/pipelines
     - ./utils:/opt/airflow/utils
-    - postgres_data:/var/lib/postgresql/data
+    - ./postgres_data:/var/lib/postgresql/data
+    - ./.google/fashionimages-441305-8e0ac87a473e.json:/opt/airflow/.google/fashionimages-441305-8e0ac87a473e.json
+    - ./.kaggle/kaggle.json:/opt/airflow/.kaggle/kaggle.json
   depends_on:
     - postgres
     - redis

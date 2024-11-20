@@ -33,7 +33,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='etl_kaggle_fashion_images_pipeline',
+    dag_id='Extract',
     default_args=default_args,
     schedule_interval=None,
     catchup=False,

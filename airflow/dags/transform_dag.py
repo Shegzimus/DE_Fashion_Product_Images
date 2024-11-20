@@ -26,7 +26,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='etl_kaggle_fashion_images_pipeline',
+    dag_id='Transform',
     default_args=default_args,
     schedule_interval='@daily',
     catchup=False,
@@ -106,9 +106,9 @@ end = DummyOperator(task_id="end", dag=dag)
 Define the dependency between tasks
 """
 
-begin >> [convert_images_task >> convert_styles_task]
+begin >> [convert_images_task, convert_styles_task]
 
 convert_images_task >> save_images_task
 convert_styles_task >> save_styles_task
 
-[save_images_task >> save_styles_task] >> end
+[save_images_task, save_styles_task] >> end
