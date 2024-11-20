@@ -37,7 +37,11 @@ This pipeline is designed to:
 I was able to learn the following new things as a result of building this pipeline:
 1. Airflow's PythonOperator is flexible enough to [dynamically create tasks](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/95586fd0742ab4b83cca844da5ba46d2b37babe8/airflow/dags/load_dag.py#L59) based on input configurations. The ability to loop through a list of folder paths and generate individual tasks for each folder upload to GCS was an efficient approach I hadn't considered before.
 2. While working on this pipeline, I found that [breaking down tasks into smaller, more focused functions](https://www.youtube.com/watch?v=rXjf8eiGsSI) really helped me stay on top of the development process. By using function decomposition, I was able to write [cleaner, more manageable code(https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/master/airflow/pipelines/load.py)] where each function had a single responsibility. This made debugging, testing, and extending the code much easier, and overall improved how I approached the project.
-3. I recently learned about the use of `sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))` during development, and it was a game changer for managing imports across different files. This line allows me to modify the Python path dynamically, making it easier to call functions from other files without running into import errors. It’s a small addition, but it really streamlined how I structure and reference my code in larger projects. 
+3. I recently learned about the use of 
+```python
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+``` 
+during development, and it was a game changer for managing imports across different files. This line allows me to modify the Python path dynamically, making it easier to call functions from other files without running into import errors. It’s a small addition, but it really streamlined how I structure and reference my code in larger projects. 
 ## Prerequisites
 1. Google console account with appropriate permissions for GCS and BigQuery
 2. Kaggle API Credentials
