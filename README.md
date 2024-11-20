@@ -40,8 +40,11 @@ I was able to learn the following new things as a result of building this pipeli
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ``` 
 during development, and it was a game changer for managing imports across different files. This line allows me to modify the Python path dynamically, making it easier to call functions from other files without running into import errors. It’s a small addition, but it really streamlined how I structure and reference my code in larger projects.
+
 4. One thing I realized while working on this project is the functional difference between declaring volumes in the Docker Compose file and copying them in the Dockerfile. By doing this, I can link external files or directories to the container at runtime, which means I can modify data or configurations without having to rebuild the container. This let me save time, especially when I needed to make configuration changes or work with persistent data.
+   
 5. One takeaway I got from the advice about not needing gosu and vim in the Dockerfile is how it encourages a more minimal and efficient container setup. By avoiding unnecessary packages like gosu and vim, I can keep the container lightweight, reducing its attack surface and improving its overall performance. It reminded me that containers should be as simple as possible, with everything needed for production tasks and not much else.
+   
 6. I learned that I can dynamically download the latest SDK during container startup. This ensures I'm always using the most up-to-date version without needing to manually update the Dockerfile or rebuild the container. It keeps things efficient and ensures my application stays current with minimal effort.
 ## Prerequisites
 1. Google console account with appropriate permissions for GCS and BigQuery
