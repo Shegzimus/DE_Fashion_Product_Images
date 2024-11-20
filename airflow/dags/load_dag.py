@@ -5,6 +5,7 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 from airflow.providers.google.cloud.transfers.bigquery_to_bigquery import BigQueryToBigQueryOperator
 from datetime import datetime
+from airflow.operators.dummy import DummyOperator
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -27,12 +28,12 @@ default_args = {
 }
 
 dag = DAG(
-    'upload_folders_to_gcs',
+    dag_id='Load',
     default_args=default_args,
-    description='Upload multiple folders after extraction to GCS',
     schedule_interval=None,
-    start_date=datetime(2024, 1, 1),
     catchup=False,
+    max_active_runs=1,
+    tags=['kaggle', 'etl', 'fashion_images']
 )
 
 """
@@ -66,7 +67,7 @@ for folder in folder_paths:
             "target_folder_prefix": folder["gcs_prefix"]
         },
         provide_context=True,
-        dag=dag,
+        dag=dag
     )
     upload_to_gcs_tasks.append(task)
 
@@ -77,18 +78,24 @@ Task 2: Upload the parquet files to BigQuery
 """
 transfer_images_pq_to_bigquery = PythonOperator(
     task_id='transfer_images_pq_to_bigquery',
-    python_callable= parquet_bucket_to_bq(dataset_id='de_dataset_staging',
-                                 file_path= images_parquet_path),
+    python_callable= parquet_bucket_to_bq,
+    op_kwargs={
+        "dataset_id":'de_dataset_staging',
+        "file_path": styles_parquet_path
+    },
     provide_context=True,
-    dag=dag,
+    dag=dag
 )
 
 transfer_styles_pq_to_bigquery = PythonOperator(
     task_id='transfer_styles_pq_to_bigquery',
-    python_callable= parquet_bucket_to_bq(dataset_id='de_dataset_staging',
-                                 file_path= styles_parquet_path),
+    python_callable= parquet_bucket_to_bq,
+    op_kwargs={
+        "dataset_id":'de_dataset_staging',
+        "file_path": images_parquet_path
+    },
     provide_context=True,
-    dag=dag,
+    dag=dag
 )
 
 """
@@ -96,10 +103,9 @@ Task 3: Send image metadata to BigQuery
 
 """
 upload_org_img_metadata_to_bigquery = PythonOperator(
-    task_id='upload_metadata_to_bigquery',
+    task_id='upload_org_metadata_to_bigquery',
     python_callable=upload_metadata_to_bigquery,
     provide_context=True,
-    dag=dag,
     op_kwargs={
         "bucket_name": BUCKET,
         "folder_path": original_image_path,
@@ -110,10 +116,9 @@ upload_org_img_metadata_to_bigquery = PythonOperator(
 )
 
 upload_greyscale_metadata_to_bigquery = PythonOperator(
-    task_id='upload_metadata_to_bigquery',
+    task_id='upload_greyscale_metadata_to_bigquery',
     python_callable=upload_metadata_to_bigquery,
     provide_context=True,
-    dag=dag,
     op_kwargs={
         "bucket_name": BUCKET,
         "folder_path": greyscale_images_path,
@@ -133,8 +138,8 @@ end = DummyOperator(task_id="end", dag=dag)
 
 # Set dependencies
 
+begin >> upload_to_gcs_tasks
 for task in upload_to_gcs_tasks:
-    task >> [transfer_images_pq_to_bigquery, transfer_styles_pq_to_bigquery] >> files_uploaded
+    task >> [files_uploaded]
 
-
-files_uploaded >> transfer_images_pq_to_bigquery >> transfer_styles_pq_to_bigquery >> upload_greyscale_metadata_to_bigquery >> upload_org_img_metadata_to_bigquery >> end
+files_uploaded >> transfer_images_pq_to_bigquery >> transfer_styles_pq_to_bigquery >> upload_org_img_metadata_to_bigquery >> upload_greyscale_metadata_to_bigquery >> end
