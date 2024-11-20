@@ -41,7 +41,7 @@ I was able to learn the following new things as a result of building this pipeli
 ```python
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ``` 
-    during development, and it was a game changer for managing imports across different files. This line allows me to modify the Python path dynamically, making it easier to call functions from other files without running into import errors. It’s a small addition, but it really streamlined how I structure and reference my code in larger projects. 
+during development, and it was a game changer for managing imports across different files. This line allows me to modify the Python path dynamically, making it easier to call functions from other files without running into import errors. It’s a small addition, but it really streamlined how I structure and reference my code in larger projects. 
 ## Prerequisites
 1. Google console account with appropriate permissions for GCS and BigQuery
 2. Kaggle API Credentials
