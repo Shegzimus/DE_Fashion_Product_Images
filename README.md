@@ -18,9 +18,8 @@ I wanted to build a pipeline that handles large amounts of images and their meta
 This pipeline is designed to:
 1. [Extract](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/master/assets/Extract.png) data from Kaggle using its API
 2. [Transform](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/master/assets/transform.png) the raw data by generating metadata, standardizing images, creating greyscale copies and changing column types
-3. [Upload](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/master/assets/load.png) the data to GCS using folder oriented and flexible functions.
-4. Load the transformed data into BigQuery
-5. Perform aggregations on the image data and it's metadata.
+3. [Upload](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/master/assets/load.png) the data to GCS using folder oriented and flexible functions, and load the transformed data into BigQuery.
+4. Perform aggregations on the image data and it's metadata.
 
 
 ## Architecture
