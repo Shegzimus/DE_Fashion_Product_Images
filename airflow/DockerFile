@@ -1,5 +1,5 @@
 # Base image for Apache Airflow
-FROM apache/airflow:2.6.2
+FROM apache/airflow:2.10.2-python3.11
 
 # Set environment variables
 ENV AIRFLOW_HOME=/opt/airflow
@@ -13,13 +13,15 @@ ARG AIRFLOW_UID=50000
 # Switch to root to install necessary tools
 USER root
 
-# Install necessary packages (gosu, curl, vim, unzip)
+# Install necessary packages
 RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends gosu curl vim unzip && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and install Google Cloud SDK
-RUN DOWNLOAD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-265.0.0-linux-x86_64.tar.gz" \
+RUN DOWNLOAD_URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-<latest_version>-linux-x86_64.tar.gz" \
     && TMP_DIR="$(mktemp -d)" \
     && curl -fL "${DOWNLOAD_URL}" --output "${TMP_DIR}/google-cloud-sdk.tar.gz" \
     && mkdir -p "${GCLOUD_HOME}" \
@@ -34,16 +36,18 @@ WORKDIR $AIRFLOW_HOME
 # Switch away from root to install pip
 USER $AIRFLOW_UID 
 
-
 # Copy the requirements file and install Python packages
 COPY requirements.txt .
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Create the data directory
-RUN mkdir -p $AIRFLOW_HOME/data
-
-# Copy Google Cloud credentials
+# Copy Google Cloud and Kaggle credentials
 COPY .google/fashionimages-441305-8e0ac87a473e.json /opt/airflow/fashionimages-441305-8e0ac87a473e.json
+COPY .kaggle /opt/airflow/.kaggle
 
+# Set appropriate permissions for credentials
+USER root
+RUN chown -R $AIRFLOW_UID:$AIRFLOW_UID /opt/airflow/fashionimages-441305-8e0ac87a473e.json /opt/airflow/.kaggle
 
+# Return to Airflow user
+USER $AIRFLOW_UID
