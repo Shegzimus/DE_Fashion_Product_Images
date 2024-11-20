@@ -49,7 +49,7 @@ during development, and it was a game changer for managing imports across differ
 2. Kaggle API Credentials
 3. Terraform installation
 4. Docker Installation
-5. Python 3.9 or higher
+5. Python 3.11 or higher
 
 ## System Configuration
 1. Clone the repository
