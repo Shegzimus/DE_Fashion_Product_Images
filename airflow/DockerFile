@@ -42,8 +42,8 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy Google Cloud and Kaggle credentials
-COPY .google/fashionimages-441305-8e0ac87a473e.json /opt/airflow/fashionimages-441305-8e0ac87a473e.json
-COPY .kaggle /opt/airflow/.kaggle
+COPY ./.google/fashionimages-441305-8e0ac87a473e.json /opt/airflow/fashionimages-441305-8e0ac87a473e.json
+COPY ./.kaggle /opt/airflow/.kaggle
 
 # Set appropriate permissions for credentials
 USER root
