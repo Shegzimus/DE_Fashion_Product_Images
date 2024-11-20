@@ -8,6 +8,7 @@ ETL Data Pipeline with Kaggle, Airflow, Celery, PostgreSQL, Google Cloud Storage
   - [Overview](#overview)
   - [Key Assumptions](#key-assumptions)
   - [Architecture](#architecture)
+  - [New Insights](#new-insights)
   - [Prerequisites](#prerequisites)
   - [System Configuration](#system-configuration)
 
@@ -31,7 +32,10 @@ This pipeline is designed to:
 3. **PostgreSQL**: Temporary storage and metadata management.
 4. **Google Cloud Storage(GCS)**: Raw data storage.
 5. **Google BigQuery(BQ)**: Data warehousing, analytics and SQL-based data transformation.
-   
+
+## New Insights
+I was able to learn the following new things as a result of building this pipeline:
+1. Airflow's PythonOperator is flexible enough to [dynamically create tasks](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/95586fd0742ab4b83cca844da5ba46d2b37babe8/airflow/dags/load_dag.py#L59) based on input configurations. The ability to loop through a list of folder paths and generate individual tasks for each folder upload to GCS was an efficient approach I hadn't considered before.   
 ## Prerequisites
 1. Google console account with appropriate permissions for GCS and BigQuery
 2. Kaggle API Credentials
