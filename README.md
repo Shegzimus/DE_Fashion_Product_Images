@@ -97,5 +97,5 @@ during development, and it was a game changer for managing imports across differ
 
 11. Launch the Airflow web UI
     ```bash
-    open http://localhost:8080
+    open http://localhost:8081
     ```
