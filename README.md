@@ -35,7 +35,8 @@ This pipeline is designed to:
 
 ## New Insights
 I was able to learn the following new things as a result of building this pipeline:
-1. Airflow's PythonOperator is flexible enough to [dynamically create tasks](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/95586fd0742ab4b83cca844da5ba46d2b37babe8/airflow/dags/load_dag.py#L59) based on input configurations. The ability to loop through a list of folder paths and generate individual tasks for each folder upload to GCS was an efficient approach I hadn't considered before.   
+1. Airflow's PythonOperator is flexible enough to [dynamically create tasks](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/95586fd0742ab4b83cca844da5ba46d2b37babe8/airflow/dags/load_dag.py#L59) based on input configurations. The ability to loop through a list of folder paths and generate individual tasks for each folder upload to GCS was an efficient approach I hadn't considered before.
+2. While working on this pipeline, I found that [breaking down tasks into smaller, more focused functions](https://www.youtube.com/watch?v=rXjf8eiGsSI) really helped me stay on top of the development process. By using function decomposition, I was able to write cleaner, more manageable code where each function had a single responsibility. This made debugging, testing, and extending the code much easier, and overall improved how I approached the project.    
 ## Prerequisites
 1. Google console account with appropriate permissions for GCS and BigQuery
 2. Kaggle API Credentials
