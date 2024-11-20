@@ -44,8 +44,7 @@ during development, and it was a game changer for managing imports across differ
 4. One thing I realized while working on this project is the functional difference between [declaring volumes](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/b3507388b648b905d4eb46bff856d4be296fd684/airflow/docker-compose.yml#L10) in the Docker Compose file and [copying them in the Dockerfile](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/b3507388b648b905d4eb46bff856d4be296fd684/airflow/DockerFile#L44). By doing this, I can link external files or directories to the container at runtime, which means I can modify data or configurations without having to rebuild the container. This let me save time, especially when I needed to make configuration changes or work with persistent data.
    
 5. By avoiding [unnecessary packages](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/b3507388b648b905d4eb46bff856d4be296fd684/airflow/DockerFile#L39) like gosu and vim, I saw that I can keep the container lightweight, reducing its attack surface and improving its overall performance. It reminded me that containers should be as simple as possible, with everything needed for production tasks and not much else.
-   
-6. I learned that I can [dynamically download the latest SDK](https://github.com/Shegzimus/DE_Fashion_Product_Images/blob/b3507388b648b905d4eb46bff856d4be296fd684/airflow/DockerFile#L24) during container startup. This jmakes sure that I'm always using the most up-to-date version without needing to manually update the Dockerfile or rebuild the container. It keeps things efficient and ensures my application stays current with minimal effort.
+
 ## Prerequisites
 1. Google console account with appropriate permissions for GCS and BigQuery
 2. Kaggle API Credentials
